@@ -104,6 +104,7 @@ function TrustedRestaurants() {
         </div>
 
         <div className="search-section">
+          <div className='dis'>
           <LocationSelector
             selectedCity={selectedCity}
             selectedDistrict={selectedDistrict}
@@ -115,6 +116,7 @@ function TrustedRestaurants() {
             cities={cities}
           />
           <SearchBar onSearch={setSearchQuery} />
+          </div>
         </div>
 
         <div className="trusted-badge-info">
@@ -129,9 +131,23 @@ function TrustedRestaurants() {
 
         <div className="main-area">
           {loadingRestaurants ? (
-            <div className="loading-state">Đang tải danh sách nhà hàng uy tín...</div>
+            <div className="loading-state">
+              <div className="spinner"></div>
+              <p>Đang tải danh sách nhà hàng uy tín...</p>
+            </div>
+          ) : filteredRestaurants.length === 0 ? (
+            <div className="no-results">
+              <div className="no-results-icon">🔍</div>
+              <h3>Không tìm thấy nhà hàng uy tín</h3>
+              <p>Thử thay đổi bộ lọc hoặc tìm kiếm với từ khóa khác</p>
+            </div>
           ) : (
-            <RestaurantList restaurants={filteredRestaurants} />
+            <>
+              <div className="results-header">
+                <h2>Tìm thấy {filteredRestaurants.length} nhà hàng uy tín</h2>
+              </div>
+              <RestaurantList restaurants={filteredRestaurants} />
+            </>
           )}
         </div>
       </div>

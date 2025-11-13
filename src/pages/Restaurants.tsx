@@ -126,17 +126,19 @@ function Restaurants() {
         </div>
 
         <div className="search-section">
-          <LocationSelector
-            selectedCity={selectedCity}
-            selectedDistrict={selectedDistrict}
-            onCityChange={(cityId) => {
-              setSelectedCity(cityId);
-              setSelectedDistrict('');
-            }}
-            onDistrictChange={setSelectedDistrict}
-            cities={cities}
-          />
-          <SearchBar onSearch={setSearchQuery} />
+          <div className='dis'>
+            <LocationSelector
+              selectedCity={selectedCity}
+              selectedDistrict={selectedDistrict}
+              onCityChange={(cityId) => {
+                setSelectedCity(cityId);
+                setSelectedDistrict('');
+              }}
+              onDistrictChange={setSelectedDistrict}
+              cities={cities}
+            />
+            <SearchBar onSearch={setSearchQuery} />
+          </div>
         </div>
 
         <div className="content-layout">

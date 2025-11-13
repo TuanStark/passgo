@@ -103,19 +103,81 @@
   background: #fff5f5;
 }
 
-.account-btn span:first-child {
+.account-btn.logged-in {
+  padding: 6px 12px;
+  gap: 10px;
+}
+
+.account-btn.logged-in:hover {
+  border-color: #667eea;
+  background: #f0f4ff;
+}
+
+.account-user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-avatar-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.user-avatar-small img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.account-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.account-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.2;
+}
+
+.account-label {
+  font-size: 11px;
+  color: #999;
+  line-height: 1.2;
+}
+
+.account-icon {
   font-size: 18px;
 }
 
-.dropdown-arrow {
+.dropdown-toggle {
   font-size: 10px;
   margin-left: 4px;
   transition: transform 0.3s;
+  color: #999;
 }
 
-.account-dropdown:hover .dropdown-arrow,
-.account-btn:focus + .dropdown-menu .dropdown-arrow {
+.account-btn:hover .dropdown-toggle {
   transform: rotate(180deg);
+  color: #e74c3c;
+}
+
+.account-btn.logged-in:hover .dropdown-toggle {
+  color: #667eea;
 }
 
 .dropdown-menu {
@@ -173,6 +235,19 @@
 .user-email {
   font-size: 12px;
   color: #666;
+  margin-bottom: 4px;
+}
+
+.view-profile-link {
+  font-size: 12px;
+  color: #667eea;
+  font-weight: 600;
+  margin-top: 4px;
+  transition: color 0.3s;
+}
+
+.user-info:hover .view-profile-link {
+  color: #5568d3;
 }
 
 .dropdown-divider {
@@ -182,7 +257,9 @@
 }
 
 .dropdown-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 12px 15px;
   color: #333;
   text-decoration: none;
@@ -196,9 +273,19 @@
   font-family: inherit;
 }
 
+.dropdown-icon {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
 .dropdown-item:hover {
   background: #f8f9fa;
   color: #e74c3c;
+}
+
+.dropdown-item:hover .dropdown-icon {
+  transform: scale(1.1);
 }
 
 .logout-btn {

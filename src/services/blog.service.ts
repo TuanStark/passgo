@@ -55,7 +55,12 @@ export const blogService = {
     page?: number;
     limit?: number;
   }): Promise<BlogPost[]> {
-    return apiClient.get<BlogPost[]>(API_ENDPOINTS.BLOG.BASE, params);
+    const response = await apiClient.get<{ data: BlogPost[]; meta?: any } | BlogPost[]>(API_ENDPOINTS.BLOG.BASE, params);
+    // Handle response structure - backend returns { data: [...], meta: {...} }
+    if (Array.isArray(response)) {
+      return response;
+    }
+    return response.data || [];
   },
 
   async getById(id: string): Promise<BlogPost> {

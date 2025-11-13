@@ -26,7 +26,20 @@ export interface Booking {
     id: string;
     name: string;
     slug: string;
-    address: string;
+    address?: string;
+    city?: {
+      id: string;
+      name: string;
+    };
+    district?: {
+      id: string;
+      name: string;
+    };
+    images?: Array<{
+      id: string;
+      imageUrl: string;
+      imageType: string;
+    }>;
   };
 }
 

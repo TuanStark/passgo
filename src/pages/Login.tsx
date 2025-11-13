@@ -41,7 +41,6 @@ function Login() {
       <div className="auth-container">
         <div className="auth-card">
           <div className="auth-header">
-            <div className="auth-logo">Booking Res</div>
             <h1>Đăng nhập</h1>
             <p>Chào mừng bạn trở lại Booking Res</p>
           </div>
@@ -90,11 +89,11 @@ function Login() {
             </button>
           </form>
 
-          <div className="auth-divider">
+          {/* <div className="auth-divider">
             <span>Hoặc</span>
-          </div>
+          </div> */}
 
-          <div className="social-login">
+          {/* <div className="social-login">
             <button className="social-btn google-btn">
               <span>🔍</span>
               Đăng nhập với Google
@@ -103,7 +102,7 @@ function Login() {
               <span>📘</span>
               Đăng nhập với Facebook
             </button>
-          </div>
+          </div> */}
 
           <div className="auth-footer">
             <p>

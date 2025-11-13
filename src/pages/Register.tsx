@@ -93,7 +93,6 @@ function Register() {
       <div className="auth-container">
         <div className="auth-card">
           <div className="auth-header">
-            <div className="auth-logo">Booking Res</div>
             <h1>Đăng ký</h1>
             <p>Tạo tài khoản mới trên Booking Res</p>
           </div>
@@ -187,7 +186,7 @@ function Register() {
             </button>
           </form>
 
-          <div className="auth-divider">
+          {/* <div className="auth-divider">
             <span>Hoặc</span>
           </div>
 
@@ -200,7 +199,7 @@ function Register() {
               <span>📘</span>
               Đăng ký với Facebook
             </button>
-          </div>
+          </div> */}
 
           <div className="auth-footer">
             <p>

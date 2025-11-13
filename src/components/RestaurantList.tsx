@@ -18,7 +18,6 @@ const RestaurantList: React.FC<RestaurantListProps> = ({ restaurants }) => {
 
   return (
     <div className="restaurant-list">
-      <h2 className="section-title">Nhà hàng uy tín</h2>
       <div className="restaurant-grid">
         {restaurants.map((restaurant) => (
           <RestaurantCard key={restaurant.id} restaurant={restaurant} />

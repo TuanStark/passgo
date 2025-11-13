@@ -1,18 +1,47 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { collectionsService } from '../services/collections.service';
+import { collectionsService, type Collection } from '../services/collections.service';
+import { locationsService, type City } from '../services/locations.service';
+import { restaurantsService, type Restaurant } from '../services/restaurants.service';
 import RestaurantCard from '../components/RestaurantCard';
 import './Collections.css';
 
 function Collections() {
   const { city } = useParams();
-  const [selectedCity, setSelectedCity] = useState(city || 'all');
-  const [collections, setCollections] = useState<any[]>([]);
+  const [selectedCity, setSelectedCity] = useState<string>('all');
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Load cities
+  useEffect(() => {
+    const loadCities = async () => {
+      try {
+        const citiesData = await locationsService.getCities();
+        setCities(Array.isArray(citiesData) ? citiesData : []);
+        
+        // Set default city from URL param
+        if (city && Array.isArray(citiesData)) {
+          const matched = citiesData.find(
+            (c) => c.code?.toLowerCase() === city.toLowerCase() || c.id === city,
+          );
+          if (matched) {
+            setSelectedCity(matched.id);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading cities:', error);
+        setCities([]);
+      }
+    };
+    loadCities();
+  }, [city]);
+
+  // Load collections
   useEffect(() => {
     const loadCollections = async () => {
       try {
+        setLoading(true);
         const cityId = selectedCity !== 'all' ? selectedCity : undefined;
         const data = await collectionsService.getAll(cityId);
         setCollections(Array.isArray(data) ? data : []);
@@ -26,16 +55,41 @@ function Collections() {
     loadCollections();
   }, [selectedCity]);
 
+  // Helper function to normalize restaurant data from collection
+  const normalizeRestaurantFromCollection = (item: any): Restaurant => {
+    const restaurant = item.restaurant || item;
+    return {
+      ...restaurant,
+      cuisines: restaurant.cuisines?.map((c: any) => ({
+        id: c.cuisine?.id || c.id,
+        name: c.cuisine?.name || c.name,
+        slug: c.cuisine?.slug || c.slug,
+        icon: c.cuisine?.icon || c.icon,
+      })) || [],
+      images: restaurant.images?.map((img: any) => ({
+        id: img.id,
+        imageUrl: img.imageUrl,
+        imageType: img.imageType,
+      })) || [],
+      city: restaurant.city,
+      district: restaurant.district,
+    } as Restaurant;
+  };
+
   // Component for individual collection card
-  const CollectionCard = ({ collection }: { collection: any }) => {
-    const [restaurants, setRestaurants] = useState<any[]>([]);
+  const CollectionCard = ({ collection }: { collection: Collection }) => {
+    const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
     const [loadingRestaurants, setLoadingRestaurants] = useState(true);
 
     useEffect(() => {
       const loadRestaurants = async () => {
         try {
           const collectionData = await collectionsService.getById(collection.id);
-          setRestaurants(collectionData.restaurants || []);
+          // Handle API response structure: restaurants array with restaurant objects
+          const restaurantsData = (collectionData as any).restaurants || collectionData.restaurants || [];
+          // Normalize restaurant data from collection structure
+          const normalizedRestaurants = restaurantsData.map(normalizeRestaurantFromCollection);
+          setRestaurants(normalizedRestaurants);
         } catch (error) {
           console.error('Error loading collection restaurants:', error);
           setRestaurants([]);
@@ -61,11 +115,16 @@ function Collections() {
         <div className="collection-restaurants">
           <h4>Nhà hàng trong bộ sưu tập</h4>
           {loadingRestaurants ? (
-            <p>Đang tải nhà hàng...</p>
+            <div className="loading-restaurants">
+              <div className="mini-spinner"></div>
+              <p>Đang tải nhà hàng...</p>
+            </div>
+          ) : restaurants.length === 0 ? (
+            <p className="no-restaurants">Chưa có nhà hàng trong bộ sưu tập này</p>
           ) : (
             <div className="restaurants-mini-grid">
-              {restaurants.map((restaurant: any) => (
-                <RestaurantCard key={restaurant.id} restaurant={restaurant} />
+              {restaurants.map((restaurant: Restaurant, index: number) => (
+                <RestaurantCard key={restaurant.id || `restaurant-${collection.id}-${index}`} restaurant={restaurant} />
               ))}
             </div>
           )}
@@ -89,23 +148,29 @@ function Collections() {
           >
             Tất cả
           </button>
-          <button
-            className={selectedCity === 'Hà Nội' ? 'active' : ''}
-            onClick={() => setSelectedCity('Hà Nội')}
-          >
-            Hà Nội
-          </button>
-          <button
-            className={selectedCity === 'Hồ Chí Minh' ? 'active' : ''}
-            onClick={() => setSelectedCity('Hồ Chí Minh')}
-          >
-            Hồ Chí Minh
-          </button>
+          {cities.map((city) => (
+            <button
+              key={city.id}
+              className={selectedCity === city.id ? 'active' : ''}
+              onClick={() => setSelectedCity(city.id)}
+            >
+              {city.name}
+            </button>
+          ))}
         </div>
 
         <div className="collections-grid">
           {loading ? (
-            <p>Đang tải...</p>
+            <div className="loading-state">
+              <div className="spinner"></div>
+              <p>Đang tải bộ sưu tập...</p>
+            </div>
+          ) : collections.length === 0 ? (
+            <div className="no-results">
+              <div className="no-results-icon">📚</div>
+              <h3>Không tìm thấy bộ sưu tập nào</h3>
+              <p>Thử chọn thành phố khác hoặc quay lại sau</p>
+            </div>
           ) : (
             collections.map((collection) => (
               <CollectionCard key={collection.id} collection={collection} />

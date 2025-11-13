@@ -208,14 +208,16 @@ function Home() {
         {/* Search Section */}
         <div className="search-section">
           <h2 className="section-title">Tìm kiếm nhà hàng</h2>
-          <LocationSelector
-            selectedCity={selectedCity}
-            selectedDistrict={selectedDistrict}
-            onCityChange={setSelectedCity}
-            onDistrictChange={setSelectedDistrict}
-            cities={cities}
-          />
-          <SearchBar onSearch={setSearchQuery} />
+          <div className='dis'>
+            <LocationSelector
+              selectedCity={selectedCity}
+              selectedDistrict={selectedDistrict}
+              onCityChange={setSelectedCity}
+              onDistrictChange={setSelectedDistrict}
+              cities={cities}
+            />
+            <SearchBar onSearch={setSearchQuery} />
+          </div>
         </div>
 
         {/* Main Content */}

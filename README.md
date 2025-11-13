@@ -15,6 +15,10 @@ The React Compiler is not enabled on this template because of its impact on dev 
 
 If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
+```
+cd passgo-function
+docker exec -i booking_res_postgres psql -U booking_res -d booking_res < seed.sql
+```
 ```js
 export default defineConfig([
   globalIgnores(['dist']),

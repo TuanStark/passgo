@@ -10,6 +10,11 @@ export interface User {
   role: string;
   isActive: boolean;
   emailVerified: boolean;
+  stats?: {
+    bookingsCount: number;
+    reviewsCount: number;
+    favoritesCount: number;
+  };
 }
 
 export interface Booking {
@@ -18,11 +23,30 @@ export interface Booking {
   bookingDate: string;
   bookingTime: string;
   numberOfGuests: number;
-  status: string;
+  specialRequests?: string;
+  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'NO_SHOW';
+  cancellationReason?: string;
+  cancelledAt?: string;
+  createdAt: string;
+  updatedAt: string;
   restaurant?: {
     id: string;
     name: string;
     slug: string;
+    address?: string;
+    city?: {
+      id: string;
+      name: string;
+    };
+    district?: {
+      id: string;
+      name: string;
+    };
+    images?: Array<{
+      id: string;
+      imageUrl: string;
+      imageType: string;
+    }>;
   };
 }
 

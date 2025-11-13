@@ -7,7 +7,11 @@
 .main-content {
   flex: 1;
   background: #f5f5f5;
-  padding: 30px 0;
+  /* padding: 30px 0; */
+}
+
+.main-content.auth-layout {
+  padding: 0;
 }
 
 .container {

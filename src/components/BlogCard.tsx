@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { BlogPost } from '../data/blogData';
+import type { BlogPost } from '../services/blog.service';
 import './BlogCard.css';
 
 interface BlogCardProps {
@@ -15,7 +15,8 @@ const BlogCard: React.FC<BlogCardProps> = ({ post, featured = false }) => {
     navigate(`/blog/${post.id}`);
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleDateString('vi-VN', {
       day: '2-digit',
@@ -24,25 +25,33 @@ const BlogCard: React.FC<BlogCardProps> = ({ post, featured = false }) => {
     });
   };
 
+  const imageUrl = post.featuredImage || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600';
+  const categoryName = post.category?.name || '';
+  const authorName = post.author?.name || 'Booking Res Team';
+  const publishDate = post.publishedAt || post.createdAt;
+  const excerpt = post.excerpt || '';
+
   return (
     <div className={`blog-card ${featured ? 'featured' : ''}`} onClick={handleClick}>
       <div className="blog-image">
-        <img src={post.image} alt={post.title} />
-        <div className="blog-category-badge">{post.category}</div>
+        <img src={imageUrl} alt={post.title} />
+        {categoryName && (
+          <div className="blog-category-badge">{categoryName}</div>
+        )}
       </div>
       <div className="blog-content">
         <h3 className="blog-title">{post.title}</h3>
-        <p className="blog-excerpt">{post.excerpt}</p>
+        {excerpt && <p className="blog-excerpt">{excerpt}</p>}
         <div className="blog-meta">
-          <span className="blog-author">{post.author}</span>
-          <span className="blog-date">{formatDate(post.publishDate)}</span>
+          <span className="blog-author">{authorName}</span>
+          <span className="blog-date">{formatDate(publishDate)}</span>
           <span className="blog-views">{post.views.toLocaleString()} lượt xem</span>
         </div>
         {post.tags && post.tags.length > 0 && (
           <div className="blog-tags">
-            {post.tags.map((tag, idx) => (
-              <span key={idx} className="blog-tag">
-                {tag}
+            {post.tags.map((tag) => (
+              <span key={tag.id} className="blog-tag">
+                {tag.name}
               </span>
             ))}
           </div>
