@@ -1,45 +1,99 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import LocationSelector from '../components/LocationSelector';
 import SearchBar from '../components/SearchBar';
 import RestaurantList from '../components/RestaurantList';
-import { restaurants, cities } from '../data/mockData';
+import { restaurantsService } from '../services/restaurants.service';
+import { locationsService } from '../services/locations.service';
+import type { Restaurant } from '../services/restaurants.service';
+import type { City } from '../services/locations.service';
 import './TrustedRestaurants.css';
 
 function TrustedRestaurants() {
   const { city } = useParams();
-  const [selectedCity, setSelectedCity] = useState(city || 'hanoi');
+  const [selectedCity, setSelectedCity] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [cities, setCities] = useState<City[]>([]);
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingRestaurants, setLoadingRestaurants] = useState(false);
 
-  // Filter only trusted restaurants (high rating and many reviews)
-  const trustedRestaurants = useMemo(() => {
-    return restaurants.filter((restaurant) => {
-      // Trusted criteria: rating >= 4.5 and reviewCount >= 200
-      const isTrusted = restaurant.rating >= 4.5 && restaurant.reviewCount >= 200;
+  useEffect(() => {
+    const loadCities = async () => {
+      try {
+        const citiesData = await locationsService.getCities();
+        setCities(Array.isArray(citiesData) ? citiesData : []);
 
-      if (!isTrusted) return false;
+        let defaultCityId = '';
+        if (Array.isArray(citiesData) && city) {
+          const matched = citiesData.find(
+            (c) => c.code?.toLowerCase() === city.toLowerCase() || c.id === city,
+          );
+          if (matched) {
+            defaultCityId = matched.id;
+          }
+        }
+        if (!defaultCityId && Array.isArray(citiesData) && citiesData.length > 0) {
+          defaultCityId = citiesData[0].id;
+        }
+        setSelectedCity(defaultCityId);
+      } catch (error) {
+        console.error('Error loading cities:', error);
+        setCities([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      const currentCity = cities.find((c) => c.id === selectedCity);
-      if (currentCity && restaurant.city !== currentCity.name) {
-        return false;
+    loadCities();
+  }, [city]);
+
+  useEffect(() => {
+    const loadTrusted = async () => {
+      if (!selectedCity) {
+        setRestaurants([]);
+        return;
       }
 
-      if (selectedDistrict && restaurant.district !== selectedDistrict) {
-        return false;
+      setLoadingRestaurants(true);
+      try {
+        const data = await restaurantsService.getTrusted(selectedCity);
+        setRestaurants(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Error loading trusted restaurants:', error);
+        setRestaurants([]);
+      } finally {
+        setLoadingRestaurants(false);
       }
+    };
 
-      if (
-        searchQuery &&
-        !restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !restaurant.address.toLowerCase().includes(searchQuery.toLowerCase())
-      ) {
-        return false;
-      }
+    if (!loading) {
+      loadTrusted();
+    }
+  }, [loading, selectedCity]);
 
-      return true;
-    });
-  }, [selectedCity, selectedDistrict, searchQuery]);
+  const filteredRestaurants = useMemo(() => {
+    let list = Array.isArray(restaurants) ? [...restaurants] : [];
+
+    if (selectedDistrict) {
+      list = list.filter(
+        (restaurant) =>
+          restaurant.districtId === selectedDistrict || restaurant.district?.id === selectedDistrict,
+      );
+    }
+
+    if (searchQuery) {
+      const normalized = searchQuery.toLowerCase();
+      list = list.filter(
+        (restaurant) =>
+          restaurant.name.toLowerCase().includes(normalized) ||
+          restaurant.address.toLowerCase().includes(normalized),
+      );
+    }
+
+    return list;
+  }, [restaurants, selectedDistrict, searchQuery]);
 
   return (
     <div className="trusted-restaurants-page">
@@ -53,8 +107,12 @@ function TrustedRestaurants() {
           <LocationSelector
             selectedCity={selectedCity}
             selectedDistrict={selectedDistrict}
-            onCityChange={setSelectedCity}
+            onCityChange={(cityId) => {
+              setSelectedCity(cityId);
+              setSelectedDistrict('');
+            }}
             onDistrictChange={setSelectedDistrict}
+            cities={cities}
           />
           <SearchBar onSearch={setSearchQuery} />
         </div>
@@ -70,7 +128,11 @@ function TrustedRestaurants() {
         </div>
 
         <div className="main-area">
-          <RestaurantList restaurants={trustedRestaurants} />
+          {loadingRestaurants ? (
+            <div className="loading-state">Đang tải danh sách nhà hàng uy tín...</div>
+          ) : (
+            <RestaurantList restaurants={filteredRestaurants} />
+          )}
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Restaurant } from '../data/mockData';
+import type { Restaurant } from '../services/restaurants.service';
 import RestaurantCard from './RestaurantCard';
 import './RestaurantList.css';
 

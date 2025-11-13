@@ -1,8 +1,8 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
-import type { Restaurant } from '../data/mockData';
-import { restaurants } from '../data/mockData';
+import type { Restaurant } from '../services/restaurants.service';
+import { restaurantsService } from '../services/restaurants.service';
 import './Nearby.css';
 
 // Default center (Hanoi)
@@ -25,10 +25,54 @@ function Nearby() {
   const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
   const [mapCenter, setMapCenter] = useState(defaultCenter);
   const [showAppBanner, setShowAppBanner] = useState(true);
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+  // Get user location
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const location = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          setUserLocation(location);
+          setMapCenter(location);
+        },
+        () => {
+          // Fallback to default center
+          setUserLocation(defaultCenter);
+        }
+      );
+    } else {
+      setUserLocation(defaultCenter);
+    }
+  }, []);
+
+  // Load nearby restaurants
+  useEffect(() => {
+    const loadRestaurants = async () => {
+      try {
+        if (userLocation) {
+          const data = await restaurantsService.getNearby(userLocation.lat, userLocation.lng, 5);
+          setRestaurants(Array.isArray(data) ? data : []);
+        } else {
+          // Load all restaurants if no location
+          const data = await restaurantsService.getAll();
+          setRestaurants(Array.isArray(data) ? data : []);
+        }
+      } catch (error) {
+        console.error('Error loading restaurants:', error);
+        setRestaurants([]);
+      }
+    };
+    loadRestaurants();
+  }, [userLocation]);
 
   // Filter restaurants
   const filteredRestaurants = useMemo(() => {
-    let filtered = restaurants.filter((r) => r.lat && r.lng);
+    let filtered = restaurants.filter((r) => r.latitude && r.longitude);
 
     if (searchQuery) {
       filtered = filtered.filter(
@@ -40,32 +84,17 @@ function Nearby() {
 
     if (selectedCategory) {
       filtered = filtered.filter((r) =>
-        r.cuisine.some((c) => c.toLowerCase().includes(selectedCategory.toLowerCase()))
+        r.cuisines?.some((c) => c.name.toLowerCase().includes(selectedCategory.toLowerCase()))
       );
     }
 
-    // Calculate distances (mock)
-    const distances: Record<string, number> = {
-      '1': 0.12,
-      '2': 0.18,
-      '3': 0.21,
-      '4': 0.27,
-      '5': 0.34,
-      '6': 0.37,
-      '7': 0.41,
-      '8': 0.45,
-    };
-
-    return filtered.map((r) => ({
-      ...r,
-      distance: distances[r.id] || Math.random() * 2,
-    }));
-  }, [searchQuery, selectedCategory]);
+    return filtered;
+  }, [restaurants, searchQuery, selectedCategory]);
 
   const handleRestaurantClick = useCallback((restaurant: Restaurant) => {
     setSelectedRestaurant(restaurant);
-    if (restaurant.lat && restaurant.lng) {
-      setMapCenter({ lat: restaurant.lat, lng: restaurant.lng });
+    if (restaurant.latitude && restaurant.longitude) {
+      setMapCenter({ lat: Number(restaurant.latitude), lng: Number(restaurant.longitude) });
     }
   }, []);
 
@@ -116,18 +145,21 @@ function Nearby() {
                 onClick={() => handleRestaurantClick(restaurant)}
               >
                 <div className="restaurant-image-small">
-                  <img src={restaurant.image} alt={restaurant.name} />
+                  <img 
+                    src={restaurant.images?.find(img => img.imageType === 'MAIN')?.imageUrl || restaurant.images?.[0]?.imageUrl || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400'} 
+                    alt={restaurant.name} 
+                  />
                 </div>
                 <div className="restaurant-details">
                   <h3 className="restaurant-name-small">{restaurant.name}</h3>
                   <p className="restaurant-address-small">{restaurant.address}</p>
                   <div className="restaurant-meta-small">
                     <span className="rating-small">
-                      ★ {restaurant.rating} | {restaurant.distance?.toFixed(2)}km
+                      ★ {restaurant.rating}
                     </span>
                   </div>
                   <p className="restaurant-cuisine-small">
-                    {restaurant.cuisine.join(', ')}
+                    {restaurant.cuisines?.map(c => c.name).join(', ')}
                   </p>
                   <button
                     className="book-btn-small"
@@ -161,12 +193,12 @@ function Nearby() {
                 }}
               >
                 {filteredRestaurants.map((restaurant) => {
-                  if (!restaurant.lat || !restaurant.lng) return null;
+                  if (!restaurant.latitude || !restaurant.longitude) return null;
                   const isSelected = selectedRestaurant?.id === restaurant.id;
                   return (
                     <Marker
                       key={restaurant.id}
-                      position={{ lat: restaurant.lat, lng: restaurant.lng }}
+                      position={{ lat: Number(restaurant.latitude), lng: Number(restaurant.longitude) }}
                       onClick={() => handleMarkerClick(restaurant)}
                       icon={
                         isSelected
@@ -181,11 +213,11 @@ function Nearby() {
                   );
                 })}
 
-                {selectedRestaurant && selectedRestaurant.lat && selectedRestaurant.lng && (
+                {selectedRestaurant && selectedRestaurant.latitude && selectedRestaurant.longitude && (
                   <InfoWindow
                     position={{
-                      lat: selectedRestaurant.lat,
-                      lng: selectedRestaurant.lng,
+                      lat: Number(selectedRestaurant.latitude),
+                      lng: Number(selectedRestaurant.longitude),
                     }}
                     onCloseClick={() => setSelectedRestaurant(null)}
                   >

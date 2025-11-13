@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { emailExists, createUser } from '../data/userData';
+import { useAuth } from '../contexts/AuthContext';
 import './Auth.css';
 
 function Register() {
   const navigate = useNavigate();
+  const { register } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -36,11 +37,6 @@ function Register() {
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       setError('Email không hợp lệ');
-      return false;
-    }
-
-    if (emailExists(formData.email)) {
-      setError('Email này đã được sử dụng');
       return false;
     }
 
@@ -77,26 +73,19 @@ function Register() {
 
     setLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      try {
-        const newUser = createUser(
-          formData.email,
-          formData.password,
-          formData.name,
-          formData.phone
-        );
-
-        // Store user in localStorage (mock)
-        localStorage.setItem('user', JSON.stringify(newUser));
-        // Redirect to home
-        navigate('/');
-        window.location.reload(); // Refresh to update header
-      } catch (err) {
-        setError('Đăng ký thất bại. Vui lòng thử lại.');
-      }
+    try {
+      await register({
+        email: formData.email,
+        password: formData.password,
+        name: formData.name,
+        phone: formData.phone,
+      });
+      navigate('/');
+    } catch (err: any) {
+      setError(err.message || 'Đăng ký thất bại. Vui lòng thử lại.');
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   return (

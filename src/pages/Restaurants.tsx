@@ -1,86 +1,115 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import LocationSelector from '../components/LocationSelector';
 import SearchBar from '../components/SearchBar';
 import Filters from '../components/Filters';
 import RestaurantList from '../components/RestaurantList';
-import { restaurants, cities } from '../data/mockData';
+import { restaurantsService } from '../services/restaurants.service';
+import { locationsService } from '../services/locations.service';
+import type { Restaurant } from '../services/restaurants.service';
+import type { City, CuisineType } from '../services/locations.service';
 import './Restaurants.css';
 
 function Restaurants() {
-  const { city, category } = useParams();
-  const [selectedCity, setSelectedCity] = useState(city || 'hanoi');
+  const { city: cityParam, category } = useParams();
+  const [selectedCity, setSelectedCity] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPriceRange, setSelectedPriceRange] = useState('');
-  const [selectedCuisine, setSelectedCuisine] = useState<string[]>(
-    category ? [category] : []
-  );
-  const [selectedSuitableFor, setSelectedSuitableFor] = useState<string[]>([]);
+  const [selectedCuisine, setSelectedCuisine] = useState<string[]>([]);
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [cuisineTypes, setCuisineTypes] = useState<CuisineType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingRestaurants, setLoadingRestaurants] = useState(false);
 
-  const filteredRestaurants = useMemo(() => {
-    return restaurants.filter((restaurant) => {
-      const currentCity = cities.find((c) => c.id === selectedCity);
-      if (currentCity && restaurant.city !== currentCity.name) {
-        return false;
+  // Load cities and cuisine types
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        const [citiesData, cuisineData] = await Promise.all([
+          locationsService.getCities(),
+          locationsService.getCuisineTypes(),
+        ]);
+
+        setCities(Array.isArray(citiesData) ? citiesData : []);
+        setCuisineTypes(Array.isArray(cuisineData) ? cuisineData : []);
+
+        // Determine selected city based on route param or default to first city
+        let defaultCityId = '';
+        if (Array.isArray(citiesData) && cityParam) {
+          const matchedCity = citiesData.find(
+            (c) => c.code?.toLowerCase() === cityParam.toLowerCase() || c.id === cityParam,
+          );
+          if (matchedCity) {
+            defaultCityId = matchedCity.id;
+          }
+        }
+        if (!defaultCityId && Array.isArray(citiesData) && citiesData.length > 0) {
+          defaultCityId = citiesData[0].id;
+        }
+        setSelectedCity(defaultCityId);
+
+        // Determine selected cuisine based on route param
+        if (category && Array.isArray(cuisineData)) {
+          const matchedCuisine = cuisineData.find(
+            (c) => c.slug?.toLowerCase() === category.toLowerCase() || c.id === category,
+          );
+          if (matchedCuisine) {
+            setSelectedCuisine([matchedCuisine.id]);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading initial data:', error);
+        setCities([]);
+        setCuisineTypes([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadInitialData();
+  }, [cityParam, category]);
+
+  // Load restaurants whenever filters change
+  useEffect(() => {
+    const loadRestaurants = async () => {
+      if (!selectedCity) {
+        setRestaurants([]);
+        return;
       }
 
-      if (selectedDistrict && restaurant.district !== selectedDistrict) {
-        return false;
+      setLoadingRestaurants(true);
+      try {
+        const filters: any = {
+          cityId: selectedCity,
+          limit: 30,
+        };
+        if (selectedDistrict) filters.districtId = selectedDistrict;
+        if (selectedPriceRange) filters.priceRange = selectedPriceRange;
+        if (selectedCuisine.length > 0) filters.cuisineIds = selectedCuisine;
+        if (searchQuery) filters.search = searchQuery;
+
+        const data = await restaurantsService.getAll(filters);
+        setRestaurants(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Error loading restaurants:', error);
+        setRestaurants([]);
+      } finally {
+        setLoadingRestaurants(false);
       }
+    };
 
-      if (
-        searchQuery &&
-        !restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !restaurant.address.toLowerCase().includes(searchQuery.toLowerCase())
-      ) {
-        return false;
-      }
+    if (!loading) {
+      loadRestaurants();
+    }
+  }, [loading, selectedCity, selectedDistrict, selectedPriceRange, selectedCuisine, searchQuery]);
 
-      if (selectedPriceRange && restaurant.priceRange !== selectedPriceRange) {
-        return false;
-      }
-
-      if (
-        selectedCuisine.length > 0 &&
-        !selectedCuisine.some((cuisine) => restaurant.cuisine.includes(cuisine))
-      ) {
-        return false;
-      }
-
-      if (
-        selectedSuitableFor.length > 0 &&
-        !selectedSuitableFor.some((item) =>
-          restaurant.suitableFor.includes(item)
-        )
-      ) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [
-    selectedCity,
-    selectedDistrict,
-    searchQuery,
-    selectedPriceRange,
-    selectedCuisine,
-    selectedSuitableFor,
-  ]);
-
-  const handleCuisineChange = (cuisine: string) => {
+  const handleCuisineChange = (cuisineId: string) => {
     setSelectedCuisine((prev) =>
-      prev.includes(cuisine)
-        ? prev.filter((c) => c !== cuisine)
-        : [...prev, cuisine]
-    );
-  };
-
-  const handleSuitableForChange = (item: string) => {
-    setSelectedSuitableFor((prev) =>
-      prev.includes(item)
-        ? prev.filter((s) => s !== item)
-        : [...prev, item]
+      prev.includes(cuisineId)
+        ? prev.filter((c) => c !== cuisineId)
+        : [...prev, cuisineId],
     );
   };
 
@@ -100,8 +129,12 @@ function Restaurants() {
           <LocationSelector
             selectedCity={selectedCity}
             selectedDistrict={selectedDistrict}
-            onCityChange={setSelectedCity}
+            onCityChange={(cityId) => {
+              setSelectedCity(cityId);
+              setSelectedDistrict('');
+            }}
             onDistrictChange={setSelectedDistrict}
+            cities={cities}
           />
           <SearchBar onSearch={setSearchQuery} />
         </div>
@@ -111,15 +144,20 @@ function Restaurants() {
             <Filters
               selectedPriceRange={selectedPriceRange}
               selectedCuisine={selectedCuisine}
-              selectedSuitableFor={selectedSuitableFor}
+              selectedSuitableFor={[]}
               onPriceRangeChange={handlePriceRangeChange}
               onCuisineChange={handleCuisineChange}
-              onSuitableForChange={handleSuitableForChange}
+              onSuitableForChange={() => undefined}
+              cuisineTypes={cuisineTypes}
             />
           </aside>
 
           <div className="main-area">
-            <RestaurantList restaurants={filteredRestaurants} />
+            {loadingRestaurants ? (
+              <div className="loading-state">Đang tải danh sách nhà hàng...</div>
+            ) : (
+              <RestaurantList restaurants={restaurants} />
+            )}
           </div>
         </div>
       </div>

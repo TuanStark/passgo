@@ -10,6 +10,7 @@ import RestaurantDetail from './pages/RestaurantDetail';
 import Blog from './pages/Blog';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Booking from './pages/Booking';
 import './App.css';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
             <Route path="/nha-hang-uy-tin" element={<TrustedRestaurants />} />
             <Route path="/nha-hang-uy-tin/:city" element={<TrustedRestaurants />} />
             <Route path="/nha-hang/:id" element={<RestaurantDetail />} />
+            <Route path="/dat-ban" element={<Booking />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:city" element={<Blog />} />
             <Route path="/login" element={<Login />} />

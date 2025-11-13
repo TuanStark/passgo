@@ -10,7 +10,7 @@ interface BookingWidgetProps {
   }) => void;
 }
 
-const BookingWidget: React.FC<BookingWidgetProps> = ({ restaurantName, onBook }) => {
+const BookingWidget: React.FC<BookingWidgetProps> = ({ onBook }: BookingWidgetProps) => {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [guests, setGuests] = useState(2);

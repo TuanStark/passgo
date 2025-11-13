@@ -1,21 +1,77 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { collections, restaurants } from '../data/mockData';
+import { collectionsService } from '../services/collections.service';
 import RestaurantCard from '../components/RestaurantCard';
 import './Collections.css';
 
 function Collections() {
   const { city } = useParams();
   const [selectedCity, setSelectedCity] = useState(city || 'all');
+  const [collections, setCollections] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredCollections = selectedCity === 'all'
-    ? collections
-    : collections.filter((c) => !c.city || c.city === selectedCity);
+  useEffect(() => {
+    const loadCollections = async () => {
+      try {
+        const cityId = selectedCity !== 'all' ? selectedCity : undefined;
+        const data = await collectionsService.getAll(cityId);
+        setCollections(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Error loading collections:', error);
+        setCollections([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadCollections();
+  }, [selectedCity]);
 
-  const getRestaurantsByCollection = (collectionId: string) => {
-    const collection = collections.find((c) => c.id === collectionId);
-    if (!collection) return [];
-    return restaurants.filter((r) => collection.restaurantIds.includes(r.id));
+  // Component for individual collection card
+  const CollectionCard = ({ collection }: { collection: any }) => {
+    const [restaurants, setRestaurants] = useState<any[]>([]);
+    const [loadingRestaurants, setLoadingRestaurants] = useState(true);
+
+    useEffect(() => {
+      const loadRestaurants = async () => {
+        try {
+          const collectionData = await collectionsService.getById(collection.id);
+          setRestaurants(collectionData.restaurants || []);
+        } catch (error) {
+          console.error('Error loading collection restaurants:', error);
+          setRestaurants([]);
+        } finally {
+          setLoadingRestaurants(false);
+        }
+      };
+      loadRestaurants();
+    }, [collection.id]);
+
+    return (
+      <div className="collection-card">
+        <div className="collection-image">
+          <img src={collection.imageUrl || collection.image || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600'} alt={collection.title} />
+          <div className="collection-overlay">
+            <h3>{collection.title}</h3>
+            <p>{collection.description}</p>
+            <span className="restaurant-count">
+              {restaurants.length} nhà hàng
+            </span>
+          </div>
+        </div>
+        <div className="collection-restaurants">
+          <h4>Nhà hàng trong bộ sưu tập</h4>
+          {loadingRestaurants ? (
+            <p>Đang tải nhà hàng...</p>
+          ) : (
+            <div className="restaurants-mini-grid">
+              {restaurants.map((restaurant: any) => (
+                <RestaurantCard key={restaurant.id} restaurant={restaurant} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -48,31 +104,13 @@ function Collections() {
         </div>
 
         <div className="collections-grid">
-          {filteredCollections.map((collection) => {
-            const collectionRestaurants = getRestaurantsByCollection(collection.id);
-            return (
-              <div key={collection.id} className="collection-card">
-                <div className="collection-image">
-                  <img src={collection.image} alt={collection.title} />
-                  <div className="collection-overlay">
-                    <h3>{collection.title}</h3>
-                    <p>{collection.description}</p>
-                    <span className="restaurant-count">
-                      {collectionRestaurants.length} nhà hàng
-                    </span>
-                  </div>
-                </div>
-                <div className="collection-restaurants">
-                  <h4>Nhà hàng trong bộ sưu tập</h4>
-                  <div className="restaurants-mini-grid">
-                    {collectionRestaurants.map((restaurant) => (
-                      <RestaurantCard key={restaurant.id} restaurant={restaurant} />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {loading ? (
+            <p>Đang tải...</p>
+          ) : (
+            collections.map((collection) => (
+              <CollectionCard key={collection.id} collection={collection} />
+            ))
+          )}
         </div>
       </div>
     </div>

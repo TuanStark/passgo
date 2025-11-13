@@ -2,8 +2,8 @@ import { useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { blogPosts, blogCategories, type BlogCategory } from '../data/blogData';
 import BlogCard from '../components/BlogCard';
-import RestaurantCard from '../components/RestaurantCard';
-import { restaurants } from '../data/mockData';
+// import RestaurantCard from '../components/RestaurantCard';
+// import { restaurants } from '../data/mockData';
 import './Blog.css';
 
 function Blog() {
@@ -39,8 +39,8 @@ function Blog() {
       .slice(0, 12);
   }, [filteredPosts]);
 
-  // Get top restaurants for sidebar
-  const topRestaurants = restaurants.slice(0, 5);
+  // Get top restaurants for sidebar - TODO: Load from API
+  // const topRestaurants = restaurants.slice(0, 5);
 
   return (
     <div className="blog-page">
@@ -92,7 +92,8 @@ function Blog() {
           </div>
 
           {/* Sidebar */}
-          <aside className="blog-sidebar">
+          {/* TODO: Load top restaurants from API */}
+          {/* <aside className="blog-sidebar">
             <div className="sidebar-section">
               <h3 className="sidebar-title">Top nhà hàng ăn ngon</h3>
               <div className="sidebar-restaurants">
@@ -103,7 +104,7 @@ function Blog() {
                 ))}
               </div>
             </div>
-          </aside>
+          </aside> */}
         </div>
       </div>
     </div>

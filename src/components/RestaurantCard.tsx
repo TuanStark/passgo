@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { Restaurant } from '../data/mockData';
+import type { Restaurant } from '../services/restaurants.service';
 import './RestaurantCard.css';
 
 interface RestaurantCardProps {
@@ -14,10 +14,22 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({ restaurant }) => {
     navigate(`/nha-hang/${restaurant.id}`);
   };
 
+  // Get main image or first image
+  const imageUrl = restaurant.images?.find(img => img.imageType === 'MAIN')?.imageUrl 
+    || restaurant.images?.[0]?.imageUrl 
+    || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800';
+
+  // Get city and district names
+  const cityName = restaurant.city?.name || '';
+  const districtName = restaurant.district?.name || '';
+
+  // Get cuisine names
+  const cuisineNames = restaurant.cuisines?.map(c => c.name) || [];
+
   return (
     <div className="restaurant-card" onClick={handleClick}>
       <div className="restaurant-image">
-        <img src={restaurant.image} alt={restaurant.name} />
+        <img src={imageUrl} alt={restaurant.name} />
         {restaurant.isExclusive && (
           <span className="exclusive-badge">Độc quyền</span>
         )}
@@ -25,7 +37,7 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({ restaurant }) => {
       <div className="restaurant-info">
         <h3 className="restaurant-name">{restaurant.name}</h3>
         <p className="restaurant-address">
-          {restaurant.address}, {restaurant.district}, {restaurant.city}
+          {restaurant.address}{districtName && `, ${districtName}`}{cityName && `, ${cityName}`}
         </p>
         <div className="restaurant-meta">
           <div className="rating">
@@ -33,10 +45,10 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({ restaurant }) => {
             <span className="rating-value">{restaurant.rating}</span>
             <span className="review-count">({restaurant.reviewCount} đánh giá)</span>
           </div>
-          <div className="price-range">{restaurant.priceRange}</div>
+          <div className="price-range">{restaurant.priceRange || 'N/A'}</div>
         </div>
         <div className="restaurant-tags">
-          {restaurant.cuisine.slice(0, 2).map((tag) => (
+          {cuisineNames.slice(0, 2).map((tag) => (
             <span key={tag} className="tag">
               {tag}
             </span>

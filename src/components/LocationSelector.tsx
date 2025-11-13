@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { cities } from '../data/mockData';
+import React, { useState, useEffect } from 'react';
+import { locationsService, type City, type District } from '../services/locations.service';
 import './LocationSelector.css';
 
 interface LocationSelectorProps {
@@ -7,6 +7,7 @@ interface LocationSelectorProps {
   selectedDistrict: string;
   onCityChange: (city: string) => void;
   onDistrictChange: (district: string) => void;
+  cities?: City[];
 }
 
 const LocationSelector: React.FC<LocationSelectorProps> = ({
@@ -14,12 +15,32 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   selectedDistrict,
   onCityChange,
   onDistrictChange,
+  cities: citiesProp,
 }) => {
   const [showCityDropdown, setShowCityDropdown] = useState(false);
   const [showDistrictDropdown, setShowDistrictDropdown] = useState(false);
+  const [cities, setCities] = useState<City[]>(citiesProp || []);
+  const [districts, setDistricts] = useState<District[]>([]);
+
+  useEffect(() => {
+    if (citiesProp) {
+      setCities(citiesProp);
+    } else {
+      // Load cities if not provided
+      locationsService.getCities().then(setCities).catch(console.error);
+    }
+  }, [citiesProp]);
+
+  useEffect(() => {
+    if (selectedCity) {
+      locationsService.getDistricts(selectedCity).then(setDistricts).catch(console.error);
+    } else {
+      setDistricts([]);
+    }
+  }, [selectedCity]);
 
   const currentCity = cities.find((c) => c.id === selectedCity);
-  const districts = currentCity?.districts || [];
+  const selectedDistrictName = districts.find((district) => district.id === selectedDistrict)?.name;
 
   return (
     <div className="location-selector">
@@ -56,23 +77,23 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
             className="location-btn"
             onClick={() => setShowDistrictDropdown(!showDistrictDropdown)}
           >
-            {selectedDistrict || 'Chọn quận/huyện'}
+            {selectedDistrictName || 'Chọn quận/huyện'}
             <span className="arrow">▼</span>
           </button>
           {showDistrictDropdown && (
             <div className="dropdown-menu">
-              {districts.map((district) => (
-                <div
-                  key={district}
-                  className="dropdown-item"
-                  onClick={() => {
-                    onDistrictChange(district);
-                    setShowDistrictDropdown(false);
-                  }}
-                >
-                  {district}
-                </div>
-              ))}
+            {districts.map((district) => (
+              <div
+                key={district.id}
+                className="dropdown-item"
+                onClick={() => {
+                  onDistrictChange(district.id);
+                  setShowDistrictDropdown(false);
+                }}
+              >
+                {district.name}
+              </div>
+            ))}
             </div>
           )}
         </div>

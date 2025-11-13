@@ -1,14 +1,29 @@
 import React from 'react';
-import { priceRanges, cuisineTypes, suitableFor } from '../data/mockData';
+import type { CuisineType } from '../services/locations.service';
 import './Filters.css';
+
+const priceRanges = ['< 150K', '150K - 250K', '250K - 500K', '500K - 1000K', '> 1000K'];
+const suitableFor = [
+  'Tiệc/Hội nghị',
+  'Hiện đại',
+  'Truyền thống',
+  'Sang trọng',
+  'Cổ điển',
+  'Thiên nhiên',
+  'Sân vườn',
+  'Ăn gia đình',
+  'Hẹn hò',
+  'Nhóm bạn',
+];
 
 interface FiltersProps {
   selectedPriceRange: string;
   selectedCuisine: string[];
   selectedSuitableFor: string[];
   onPriceRangeChange: (range: string) => void;
-  onCuisineChange: (cuisine: string) => void;
+  onCuisineChange: (cuisineId: string) => void;
   onSuitableForChange: (item: string) => void;
+  cuisineTypes?: CuisineType[];
 }
 
 const Filters: React.FC<FiltersProps> = ({
@@ -18,6 +33,7 @@ const Filters: React.FC<FiltersProps> = ({
   onPriceRangeChange,
   onCuisineChange,
   onSuitableForChange,
+  cuisineTypes = [],
 }) => {
   return (
     <div className="filters">
@@ -43,13 +59,13 @@ const Filters: React.FC<FiltersProps> = ({
         <h3 className="filter-title">Đồ ăn chính</h3>
         <div className="filter-options">
           {cuisineTypes.map((cuisine) => (
-            <label key={cuisine} className="filter-checkbox">
+            <label key={cuisine.id} className="filter-checkbox">
               <input
                 type="checkbox"
-                checked={selectedCuisine.includes(cuisine)}
-                onChange={() => onCuisineChange(cuisine)}
+                checked={selectedCuisine.includes(cuisine.id)}
+                onChange={() => onCuisineChange(cuisine.id)}
               />
-              <span>{cuisine}</span>
+              <span>{cuisine.name}</span>
             </label>
           ))}
         </div>

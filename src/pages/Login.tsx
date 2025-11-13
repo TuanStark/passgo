@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { validateLogin } from '../data/userData';
+import { useAuth } from '../contexts/AuthContext';
 import './Auth.css';
 
 function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -25,21 +26,14 @@ function Login() {
     setError('');
     setLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      const user = validateLogin(formData.email, formData.password);
-
-      if (user) {
-        // Store user in localStorage (mock)
-        localStorage.setItem('user', JSON.stringify(user));
-        // Redirect to home
-        navigate('/');
-        window.location.reload(); // Refresh to update header
-      } else {
-        setError('Email hoặc mật khẩu không đúng');
-      }
+    try {
+      await login(formData.email, formData.password);
+      navigate('/');
+    } catch (err: any) {
+      setError(err.message || 'Email hoặc mật khẩu không đúng');
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   return (

@@ -1,26 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import './Header.css';
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useAuth();
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
-  const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
-    // Check if user is logged in
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
-  }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
-    setUser(null);
+    logout();
     setShowAccountDropdown(false);
     navigate('/');
-    window.location.reload();
   };
 
   return (
@@ -66,7 +57,7 @@ const Header: React.FC = () => {
               </button>
               {showAccountDropdown && (
                 <div className="dropdown-menu">
-                  {user ? (
+                  {isAuthenticated && user ? (
                     <>
                       <div className="user-info">
                         <div className="user-avatar">
